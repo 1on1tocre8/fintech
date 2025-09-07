@@ -12,6 +12,10 @@ dist/
 build/
 coverage/
 .nyc_output/
+apps/*/dist/
+apps/*/coverage/
+packages/*/dist/
+packages/*/coverage/
 
 # --- Next.js (web) ---
 apps/web/.next/
@@ -29,8 +33,7 @@ apps/web/out/
 .env
 .env.*
 !.env.example
-apps/api/.env
-apps/web/.env
+apps/*/.env
 apps/*/.env.*
 !apps/api/.env.example
 !apps/web/.env.example
