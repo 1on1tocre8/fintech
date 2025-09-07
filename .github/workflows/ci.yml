@@ -1,39 +1,50 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ main ]
+
 jobs:
   build:
     runs-on: ubuntu-latest
     env:
       CI: true
+      # keep Prisma from downloading engines/generating in CI
       PRISMA_SKIP_POSTINSTALL_GENERATE: "true"
       PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING: "1"
+
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
 
       - uses: pnpm/action-setup@v4
         with:
           version: 9
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-
       - name: Install
         run: pnpm install --no-frozen-lockfile
 
-      - name: Build
-        run: pnpm build
+      - name: Build (workspace)
+        run: pnpm -w build
 
       - name: Test web (with coverage)
-        run: pnpm --filter @ev/web test -- --coverage
+        run: pnpm -w --filter @ev/web test -- --coverage
 
-      - name: Test api (no coverage gate yet)
-        run: pnpm --filter @ev/api test -- --coverage=false
+      # Keep API from failing the coverage gate for now
+      - name: Test api (no coverage gate)
+        run: pnpm -w --filter @ev/api test -- --coverage=false
 
       - name: Generate OpenAPI
-        run: pnpm --filter @ev/api generate:openapi
+        run: pnpm -w --filter @ev/api generate:openapi
 
       - name: Upload OpenAPI artifact
         uses: actions/upload-artifact@v4
         with:
           name: openapi
+          # your repo keeps this under docs/openapi/openapi.json (root-level)
           path: docs/openapi/openapi.json
+          if-no-files-found: ignore
