@@ -18,13 +18,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Install pnpm first so setup-node's cache: 'pnpm' can call pnpm successfully
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
-          run_install: false
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -32,32 +25,35 @@ jobs:
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false   # <- no "version" key here
+
       - name: Install
         run: pnpm install --frozen-lockfile
 
       - name: Build all packages
         run: pnpm -r build
 
-      # --- Tests on PRs (no coverage gate) ---
       - name: Test API (PRs, no coverage gate)
         if: github.event_name == 'pull_request'
-        run: pnpm --filter "@ev/api" test -- --passWithNoTests --coverage=false
+        run: pnpm --filter @ev/api test -- --passWithNoTests --coverage=false
 
       - name: Test Web (PRs, no coverage gate)
         if: github.event_name == 'pull_request'
-        run: pnpm --filter "@ev/web" test -- --passWithNoTests --coverage=false
+        run: pnpm --filter @ev/web test -- --passWithNoTests --coverage=false
 
       - name: Test SDK (PRs, no coverage gate)
         if: github.event_name == 'pull_request'
-        run: pnpm --filter "@ev/sdk" test -- --passWithNoTests --coverage=false
+        run: pnpm --filter @ev/sdk test -- --passWithNoTests --coverage=false
 
-      # --- On pushes to main run coverage but don't fail the build for now ---
       - name: API coverage (main, non-blocking)
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         continue-on-error: true
-        run: pnpm --filter "@ev/api" test -- --coverage
+        run: pnpm --filter @ev/api test -- --coverage
 
       - name: Web coverage (main, non-blocking)
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         continue-on-error: true
-        run: pnpm --filter "@ev/web" test -- --coverage
+        run: pnpm --filter @ev/web test -- --coverage
