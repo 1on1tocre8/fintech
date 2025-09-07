@@ -1,28 +1,47 @@
 name: CI
 
 on:
-  push:
-    branches: [main]
   pull_request:
+  push:
     branches: [main]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      NEXT_TELEMETRY_DISABLED: 1
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          version: 8
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 20
+          node-version: '20'
           cache: 'pnpm'
-      - run: pnpm install
-      - run: pnpm build
-      - run: pnpm generate:openapi
-      - run: pnpm test
-      - uses: actions/upload-artifact@v3
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: true
+
+      - name: Build all
+        run: pnpm -w build
+
+      - name: Test API (coverage >=80%)
+        run: pnpm --filter @ev/api test --coverage
+
+      - name: Test Web (relaxed coverage)
+        run: pnpm --filter @ev/web test --coverage
+
+      - name: Generate OpenAPI
+        run: pnpm --filter @ev/api generate:openapi
+
+      - name: Upload OpenAPI artifact
+        uses: actions/upload-artifact@v4
         with:
           name: openapi
           path: docs/openapi/openapi.json
+
