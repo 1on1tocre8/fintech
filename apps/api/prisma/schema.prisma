@@ -1,0 +1,197 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum PartyType {
+  CUSTOMER
+  DEALER
+}
+
+enum AccountType {
+  ASSET
+  LIABILITY
+  INCOME
+  EXPENSE
+}
+
+model Branch {
+  id        String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  parties   Party[]
+  applications Application[]
+  loans      Loan[]
+  dealers    Dealer[]
+  @@map("branches")
+}
+
+model Oem {
+  id        String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  dealers   Dealer[]
+  @@map("oems")
+}
+
+model Dealer {
+  id        String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  partyId   String   @unique @map("party_id")
+  oemId     String?  @map("oem_id")
+  branchId  String?  @map("branch_id")
+  party     Party    @relation(fields: [partyId], references: [id])
+  oem       Oem?     @relation(fields: [oemId], references: [id])
+  branch    Branch?  @relation(fields: [branchId], references: [id])
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@map("dealers")
+}
+
+model Party {
+  id        String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  type      PartyType
+  name      String
+  branchId  String?  @map("branch_id")
+  branch    Branch? @relation(fields: [branchId], references: [id])
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  applications Application[]
+  loans      Loan[]
+  kycDocuments KycDocument[]
+  dealer    Dealer?
+  @@map("parties")
+}
+
+model KycDocument {
+  id        String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  partyId   String   @map("party_id")
+  docType   String   @map("doc_type")
+  url       String
+  version   Int      @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  party     Party    @relation(fields: [partyId], references: [id])
+  @@index([partyId])
+  @@map("kyc_documents")
+}
+
+model Product {
+  id        String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  applications Application[]
+  loans      Loan[]
+  @@map("products")
+}
+
+model Application {
+  id        String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  appNumber String   @map("app_number")
+  partyId   String   @map("party_id")
+  productId String   @map("product_id")
+  branchId  String?  @map("branch_id")
+  status    String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  party     Party    @relation(fields: [partyId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
+  branch    Branch?  @relation(fields: [branchId], references: [id])
+  loan      Loan?
+  @@index([appNumber])
+  @@index([partyId])
+  @@map("applications")
+}
+
+model Loan {
+  id           String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  applicationId String? @map("application_id")
+  partyId      String   @map("party_id")
+  productId    String   @map("product_id")
+  branchId     String?  @map("branch_id")
+  amount       Decimal  @db.Decimal(18, 2)
+  status       String
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  application  Application? @relation(fields: [applicationId], references: [id])
+  party        Party      @relation(fields: [partyId], references: [id])
+  product      Product    @relation(fields: [productId], references: [id])
+  branch       Branch?    @relation(fields: [branchId], references: [id])
+  schedules    RepaymentSchedule[]
+  receipts     Receipt[]
+  vouchers     DisbursementVoucher[]
+  glEntries    GlEntry[]
+  @@index([partyId])
+  @@map("loans")
+}
+
+model RepaymentSchedule {
+  id        String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  loanId    String   @map("loan_id")
+  dueDate   DateTime @map("due_date")
+  amount    Decimal  @db.Decimal(18, 2)
+  version   Int      @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  loan      Loan     @relation(fields: [loanId], references: [id])
+  @@index([loanId])
+  @@index([dueDate])
+  @@map("repayment_schedules")
+}
+
+model Receipt {
+  id        String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  loanId    String   @map("loan_id")
+  amount    Decimal  @db.Decimal(18, 2)
+  receivedAt DateTime @map("received_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  loan      Loan     @relation(fields: [loanId], references: [id])
+  @@index([loanId])
+  @@map("receipts")
+}
+
+model DisbursementVoucher {
+  id        String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  loanId    String   @map("loan_id")
+  amount    Decimal  @db.Decimal(18, 2)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  loan      Loan     @relation(fields: [loanId], references: [id])
+  @@index([loanId])
+  @@map("disbursement_vouchers")
+}
+
+model GlAccount {
+  id        String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  code      String   @unique
+  name      String
+  type      AccountType
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  entries   GlEntry[]
+  @@map("gl_accounts")
+}
+
+model GlEntry {
+  id        String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  accountId String   @map("account_id")
+  loanId    String?  @map("loan_id")
+  debit     Decimal? @db.Decimal(18, 2)
+  credit    Decimal? @db.Decimal(18, 2)
+  entryDate DateTime @map("entry_date")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  account   GlAccount @relation(fields: [accountId], references: [id])
+  loan      Loan?     @relation(fields: [loanId], references: [id])
+  @@index([loanId])
+  @@map("gl_entries")
+}

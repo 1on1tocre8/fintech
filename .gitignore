@@ -1,5 +1,7 @@
 # --- Node / pnpm ---
 node_modules/
+apps/*/node_modules/
+packages/*/node_modules/
 .pnpm-store/
 pnpm-debug.log*
 .npm/
@@ -9,8 +11,12 @@ pnpm-debug.log*
 
 # --- Build outputs ---
 dist/
+apps/*/dist/
+packages/*/dist/
 build/
 coverage/
+apps/*/coverage/
+packages/*/coverage/
 .nyc_output/
 apps/*/dist/
 apps/*/coverage/
@@ -50,3 +56,6 @@ docker-volume-*/
 
 # Keep generated API spec under version control
 !docs/openapi/openapi.json
+
+# Make sure Prisma migrations stay tracked (safety)
+!apps/api/prisma/migrations/**

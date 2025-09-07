@@ -1,0 +1,143 @@
+Table branches {
+  id uuid [pk]
+  name varchar
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table oems {
+  id uuid [pk]
+  name varchar
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table dealers {
+  id uuid [pk]
+  party_id uuid [unique]
+  oem_id uuid [ref: > oems.id]
+  branch_id uuid [ref: > branches.id]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table parties {
+  id uuid [pk]
+  type varchar
+  name varchar
+  branch_id uuid [ref: > branches.id]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table kyc_documents {
+  id uuid [pk]
+  party_id uuid [ref: > parties.id]
+  doc_type varchar
+  url varchar
+  version int
+  deleted_at timestamp [note: 'soft delete']
+  created_at timestamp
+  updated_at timestamp
+  indexes {
+    (party_id)
+  }
+}
+
+Table products {
+  id uuid [pk]
+  name varchar
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table applications {
+  id uuid [pk]
+  app_number varchar
+  party_id uuid [ref: > parties.id]
+  product_id uuid [ref: > products.id]
+  branch_id uuid [ref: > branches.id]
+  status varchar
+  created_at timestamp
+  updated_at timestamp
+  indexes {
+    (app_number),
+    (party_id)
+  }
+}
+
+Table loans {
+  id uuid [pk]
+  application_id uuid [ref: > applications.id]
+  party_id uuid [ref: > parties.id]
+  product_id uuid [ref: > products.id]
+  branch_id uuid [ref: > branches.id]
+  amount decimal
+  status varchar
+  created_at timestamp
+  updated_at timestamp
+  indexes {
+    (party_id)
+  }
+}
+
+Table repayment_schedules {
+  id uuid [pk]
+  loan_id uuid [ref: > loans.id]
+  due_date timestamp
+  amount decimal
+  version int
+  deleted_at timestamp [note: 'soft delete']
+  created_at timestamp
+  updated_at timestamp
+  indexes {
+    (loan_id),
+    (due_date)
+  }
+}
+
+Table receipts {
+  id uuid [pk]
+  loan_id uuid [ref: > loans.id]
+  amount decimal
+  received_at timestamp
+  created_at timestamp
+  updated_at timestamp
+  indexes {
+    (loan_id)
+  }
+}
+
+Table disbursement_vouchers {
+  id uuid [pk]
+  loan_id uuid [ref: > loans.id]
+  amount decimal
+  created_at timestamp
+  updated_at timestamp
+  indexes {
+    (loan_id)
+  }
+}
+
+Table gl_accounts {
+  id uuid [pk]
+  code varchar [unique]
+  name varchar
+  type varchar
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table gl_entries {
+  id uuid [pk]
+  account_id uuid [ref: > gl_accounts.id]
+  loan_id uuid [ref: > loans.id]
+  debit decimal
+  credit decimal
+  entry_date timestamp
+  created_at timestamp
+  updated_at timestamp
+  indexes {
+    (loan_id)
+  }
+}
