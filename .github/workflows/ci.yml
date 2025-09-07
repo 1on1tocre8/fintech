@@ -18,7 +18,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Install pnpm first so setup-node's cache: 'pnpm' can call pnpm successfully
+      # Install pnpm first so setup-node's cache: pnpm can find the pnpm binary
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
@@ -29,7 +29,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: pnpm
+          cache: 'pnpm'
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Install
@@ -38,26 +38,26 @@ jobs:
       - name: Build all packages
         run: pnpm -r build
 
-      # --- Tests on PRs (no coverage gate) ---
+      # --- Tests on PRs (keep fast & green) ---
       - name: Test API (PRs, no coverage gate)
         if: github.event_name == 'pull_request'
-        run: pnpm --filter "@ev/api" test -- --passWithNoTests --coverage=false
+        run: pnpm --filter @ev/api test -- --passWithNoTests --coverage=false
 
       - name: Test Web (PRs, no coverage gate)
         if: github.event_name == 'pull_request'
-        run: pnpm --filter "@ev/web" test -- --passWithNoTests --coverage=false
+        run: pnpm --filter @ev/web test -- --passWithNoTests --coverage=false
 
       - name: Test SDK (PRs, no coverage gate)
         if: github.event_name == 'pull_request'
-        run: pnpm --filter "@ev/sdk" test -- --passWithNoTests --coverage=false
+        run: pnpm --filter @ev/sdk test -- --passWithNoTests --coverage=false
 
-      # --- On pushes to main run coverage but don't fail the build for now ---
+      # --- On pushes to main, run coverage but non-blocking for now ---
       - name: API coverage (main, non-blocking)
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         continue-on-error: true
-        run: pnpm --filter "@ev/api" test -- --coverage
+        run: pnpm --filter @ev/api test -- --coverage
 
       - name: Web coverage (main, non-blocking)
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         continue-on-error: true
-        run: pnpm --filter "@ev/web" test -- --coverage
+        run: pnpm --filter @ev/web test -- --coverage
