@@ -34,10 +34,10 @@ jobs:
         run: pnpm -w build
 
       - name: Test API (coverage >=80%)
-        run: pnpm --filter @ev/api test --coverage
+        run: pnpm --filter @ev/api test -- --coverage
 
       - name: Test Web (relaxed coverage)
-        run: pnpm --filter @ev/web test --coverage
+        run: pnpm --filter @ev/web test -- --coverage
 
       - name: Generate OpenAPI
         run: pnpm --filter @ev/api generate:openapi
