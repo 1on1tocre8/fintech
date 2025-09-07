@@ -1,48 +1,53 @@
 name: CI
 
 on:
+  push:
+    branches: [main]
   pull_request:
-    branches: [ main ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     env:
-      CI: true
-      # keep Prisma from trying to download/generate in CI
       PRISMA_SKIP_POSTINSTALL_GENERATE: "true"
-      PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING: "1"
 
     steps:
-      - uses: actions/checkout@v4
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
+      - name: 🧰 Setup pnpm
+        uses: pnpm/action-setup@v4
         with:
           version: 9
 
-      - uses: actions/setup-node@v4
+      - name: 🧰 Setup Node
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: pnpm
+          node-version: "20"
+          cache: "pnpm"
 
-      - name: Install deps
-        run: pnpm install --no-frozen-lockfile
+      - name: 📦 Install
+        run: pnpm install --frozen-lockfile
 
-      - name: Build all
-        run: pnpm build
+      - name: 🛠️ Build all
+        run: pnpm -r build
 
-      - name: Test web (with coverage)
+      - name: ✅ Test API (coverage)
+        run: pnpm --filter @ev/api test -- --coverage
+
+      - name: ✅ Test Web (coverage)
         run: pnpm --filter @ev/web test -- --coverage
 
-      # Keep API tests from failing the gate until we add more tests
-      - name: Test api (no coverage gate)
-        run: pnpm --filter @ev/api test -- --coverage=false
+      - name: 📝 Generate OpenAPI
+        run: pnpm --filter @ev/api run generate:openapi
 
-      - name: Generate OpenAPI
-        run: pnpm --filter @ev/api generate:openapi
-
-      - name: Upload OpenAPI artifact
+      - name: ⬆️ Upload OpenAPI artifact
         uses: actions/upload-artifact@v4
         with:
           name: openapi
-          path: "**/openapi.json"
+          path: docs/openapi/openapi.json

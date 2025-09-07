@@ -18,6 +18,10 @@ coverage/
 apps/*/coverage/
 packages/*/coverage/
 .nyc_output/
+apps/*/dist/
+apps/*/coverage/
+packages/*/dist/
+packages/*/coverage/
 
 # --- Next.js (web) ---
 apps/web/.next/

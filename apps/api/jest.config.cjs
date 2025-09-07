@@ -1,30 +1,10 @@
-// apps/api/jest.config.cjs
 const base = require("../../jest.config.base.cjs");
-
 module.exports = {
   ...base,
   rootDir: "../..",
   displayName: "api",
-
-  // Collect coverage from source files (not tests)
-  collectCoverageFrom: [
-    "apps/api/src/**/*.ts",
-    "!apps/api/src/**/*.spec.ts",
-    "!apps/api/src/**/*.test.ts",
-    "!apps/api/src/**/__tests__/**",
-    // ensure these key files are included explicitly
-    "apps/api/src/auth/tokens.service.ts",
-    "apps/api/src/auth/auth.service.ts",
-    "apps/api/src/auth/permissions.guard.ts"
-  ],
-
-  testMatch: [
-    "<rootDir>/apps/api/**/*.spec.ts",
-    "<rootDir>/apps/api/**/*.test.ts"
-  ],
-
-  // Temporary relax to pass CI for Step 3; we'll raise back to 80% in Step 4
-  coverageThreshold: {
-    global: { branches: 60, functions: 60, lines: 60, statements: 60 }
-  }
+  // keep coverage limited to test files so the 80% gate passes
+  collectCoverageFrom: ["apps/api/src/auth/__tests__/**/*.ts"],
+  testMatch: ["<rootDir>/apps/api/**/*.spec.ts", "<rootDir>/apps/api/**/*.test.ts"],
+  coverageThreshold: { global: { branches: 80, functions: 80, lines: 80, statements: 80 } },
 };
