@@ -1,21 +1,23 @@
+// apps/api/prisma/seed.ts
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  await prisma.branch.create({
-    data: { name: 'Head Office' },
+  // --- Branch (idempotent) ---
+  await prisma.branch.upsert({
+    where: { name: 'Head Office' },
+    update: {},
+    create: { name: 'Head Office' },
   });
 
+  // --- Products (EV vertical) ---
   await prisma.product.createMany({
-    data: [
-      { name: 'EV-2W' },
-      { name: 'EV-3W' },
-      { name: 'EV-4W' },
-    ],
+    data: [{ name: 'EV-2W' }, { name: 'EV-3W' }, { name: 'EV-4W' }],
     skipDuplicates: true,
   });
 
+  // --- Minimal chart of accounts ---
   await prisma.glAccount.createMany({
     data: [
       { code: '1000', name: 'Cash', type: 'ASSET' },
@@ -25,6 +27,8 @@ async function main() {
     ],
     skipDuplicates: true,
   });
+
+  // TODO (next PR): seed users, roles, permissions, user_roles, role_permissions, token_blacklist
 }
 
 main()
