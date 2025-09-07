@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      NEXT_TELEMETRY_DISABLED: 1
+    steps:
+      - uses: actions/checkout@v4
+
+      # Ensure Node and pnpm are available BEFORE any pnpm command
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Simple + reliable: use corepack to activate pnpm
+      - name: Ensure pnpm available
+        shell: bash
+        run: |
+          corepack enable
+          corepack prepare pnpm@9 --activate
+          pnpm -v
+
+      - name: Install deps
+        run: pnpm install --frozen-lockfile=false
+
+      - name: Build all
+        run: pnpm -w build
+
+      - name: Test API (coverage >=80%)
+        run: pnpm --filter @ev/api test -- --coverage
+
+      - name: Test Web (relaxed coverage)
+        run: pnpm --filter @ev/web test -- --coverage
+
+      - name: Generate OpenAPI
+        run: pnpm --filter @ev/api generate:openapi
+
+      - name: Upload OpenAPI artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: openapi
+          path: docs/openapi/openapi.json

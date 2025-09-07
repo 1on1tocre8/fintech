@@ -1,4 +1,49 @@
+# --- Node / pnpm ---
 node_modules/
-.next/
+.pnpm-store/
+pnpm-debug.log*
+.npm/
+.yarn/
+*.tsbuildinfo
+*.log
+
+# --- Build outputs ---
 dist/
-.env*
+build/
+coverage/
+.nyc_output/
+
+# --- Next.js (web) ---
+apps/web/.next/
+apps/web/out/
+.next/
+.vercel/
+.turbo/
+.swc/
+.cache/
+
+# --- Jest ---
+.jest-cache/
+
+# --- Env files (keep examples) ---
+.env
+.env.*
+!.env.example
+apps/api/.env
+apps/web/.env
+apps/*/.env.*
+!apps/api/.env.example
+!apps/web/.env.example
+
+# --- IDE / OS ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- Docker (local files/volumes) ---
+**/.docker/*
+docker-volume-*/
+
+# Keep generated API spec under version control
+!docs/openapi/openapi.json
