@@ -10,22 +10,25 @@ jobs:
     runs-on: ubuntu-latest
     env:
       NEXT_TELEMETRY_DISABLED: 1
-    permissions:
-      contents: read
     steps:
       - uses: actions/checkout@v4
 
+      # Ensure Node and pnpm are available BEFORE any pnpm command
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'pnpm'
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
-          run_install: true
+      # Simple + reliable: use corepack to activate pnpm
+      - name: Ensure pnpm available
+        shell: bash
+        run: |
+          corepack enable
+          corepack prepare pnpm@9 --activate
+          pnpm -v
+
+      - name: Install deps
+        run: pnpm install --frozen-lockfile=false
 
       - name: Build all
         run: pnpm -w build
@@ -44,4 +47,3 @@ jobs:
         with:
           name: openapi
           path: docs/openapi/openapi.json
-
